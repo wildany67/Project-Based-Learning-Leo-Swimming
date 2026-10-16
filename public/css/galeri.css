@@ -1,0 +1,17 @@
+/* ==========================================================================
+   Bagian Galeri
+   ========================================================================== */
+
+/* ---------- Galeri ---------- */
+.galeri { padding: 70px 0 130px; }
+.galeri .section-title { text-align: center; margin-bottom: 44px; }
+.gallery-grid { display: grid; grid-template-columns: 2fr 1fr 1fr; grid-auto-rows: 135px; gap: 12px; }
+.tile { position: relative; overflow: hidden; border-radius: 18px; color: #fff; display: flex; align-items: flex-end; }
+.tile img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.tile figcaption { position: relative; z-index: 1; padding: 12px; font-family: var(--font-small); font-size: 11px; width: 100%; background: linear-gradient(transparent, rgba(0, 0, 0, .35)); }
+.tile--sky { background: linear-gradient(160deg, #7fb4de, #2d7fb0); }
+.tile--navy { background: linear-gradient(160deg, #0f5a8b, #0a2c5e); }
+.tile--gold { background: linear-gradient(160deg, #c9a227, #8d7414); }
+.tile--big { grid-column: 1; grid-row: span 2; }
+.tile--wide { grid-column: 1; }
+.tile--tall { grid-row: span 2; }

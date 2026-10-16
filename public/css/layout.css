@@ -1,0 +1,30 @@
+/* ==========================================================================
+   Kerangka halaman: navbar dan footer
+   ========================================================================== */
+
+/* ---------- Header / navbar ---------- */
+.site-header { position: sticky; top: 0; z-index: 50; background: #fff; box-shadow: 0 1px 0 var(--line); }
+.nav { display: flex; align-items: center; justify-content: space-between; height: var(--header-h); }
+.brand img { width: 100px; height: auto; }
+.nav-menu { display: flex; align-items: center; gap: 36px; }
+.nav-menu ul { display: flex; gap: 28px; }
+.nav-menu ul a { position: relative; display: block; padding: 8px 0; font-weight: 500; font-size: 17px; }
+.nav-menu ul a::after { content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 2px; background: var(--blue); transform: scaleX(0); transition: transform .2s; }
+.nav-menu ul a:hover::after, .nav-menu ul a.is-active::after { transform: scaleX(1); }
+.nav-cta { color: #fff; }
+.nav-toggle { display: none; width: 44px; height: 44px; border: 0; background: transparent; padding: 10px; cursor: pointer; flex-direction: column; justify-content: center; gap: 5px; }
+.nav-toggle span { display: block; height: 2px; background: var(--navy); border-radius: 2px; transition: transform .2s, opacity .2s; }
+.nav-toggle[aria-expanded='true'] span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+.nav-toggle[aria-expanded='true'] span:nth-child(2) { opacity: 0; }
+.nav-toggle[aria-expanded='true'] span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+
+/* ---------- Footer ---------- */
+.site-footer { background: #061f47; color: #dbe6f5; padding: 64px 0 28px; font-family: var(--font-small); }
+.footer-grid { display: grid; grid-template-columns: 1.4fr 1fr 1fr 1.2fr; gap: 40px; }
+.footer-logo { display: grid; place-items: center; width: 82px; height: 82px; background: #fff; border-radius: 16px; margin-bottom: 14px; }
+.footer-logo img { width: 62px; height: auto; }
+.footer-brand p { font-size: 13px; max-width: 250px; }
+.site-footer h4 { font-family: var(--font-body); color: #fff; font-size: 13px; font-weight: 700; margin-bottom: 18px; }
+.site-footer li { font-size: 13px; margin-bottom: 12px; }
+.site-footer a:hover { color: #fff; text-decoration: underline; }
+.footer-bottom { margin-top: 36px; padding-top: 24px; border-top: 1px solid rgba(255, 255, 255, .15); font-size: 11px; }

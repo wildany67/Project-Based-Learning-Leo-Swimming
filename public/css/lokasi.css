@@ -1,0 +1,16 @@
+/* ==========================================================================
+   Bagian Lokasi
+   ========================================================================== */
+
+/* ---------- Lokasi ---------- */
+.lokasi { padding: 90px 0 150px; }
+.loc-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
+.loc-card { position: relative; z-index: 1; display: flex; flex-direction: column; background: #fff; border: 1px solid var(--line); border-radius: 22px; padding: 28px 28px 24px; min-height: 280px; box-shadow: 0 10px 30px rgba(10, 44, 94, .05); }
+.loc-pin { color: #000; margin-bottom: 14px; }
+.loc-card h3 { font-size: 22px; font-weight: 700; padding-bottom: 14px; border-bottom: 1px dotted var(--line); }
+.loc-pool { display: flex; align-items: center; gap: 8px; margin: 14px 0 12px; font-size: 13px; font-weight: 500; }
+.loc-pool i { flex: none; width: 16px; height: 16px; border-radius: 50%; background: var(--navy); box-shadow: 0 0 0 3px var(--blue); }
+.loc-address { font-size: 13px; font-weight: 500; }
+.loc-link { margin-top: auto; padding-top: 18px; display: flex; justify-content: space-between; align-items: center; font-weight: 700; font-size: 17px; }
+.loc-link svg { color: var(--navy); transition: transform .2s; }
+.loc-link:hover svg { transform: translateX(4px); }

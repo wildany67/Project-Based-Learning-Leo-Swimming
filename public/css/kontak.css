@@ -1,0 +1,12 @@
+/* ==========================================================================
+   Bagian Kontak (ajakan daftar)
+   ========================================================================== */
+
+/* ---------- Kontak (CTA) ---------- */
+.kontak { padding: 100px 0 110px; }
+.cta-card { display: flex; align-items: center; justify-content: space-between; gap: 32px; background: var(--blue); color: #fff; border-radius: 40px; padding: 52px 56px; }
+.cta-text h2 { font-size: clamp(26px, 3.4vw, 38px); font-weight: 800; line-height: 1.1; max-width: 460px; }
+.cta-text em { font-family: var(--font-serif); font-style: italic; font-weight: 700; color: var(--navy); }
+.cta-text p { margin-top: 18px; font-family: var(--font-small); font-size: 13px; color: rgba(255, 255, 255, .8); }
+.cta-actions { display: flex; flex-direction: column; gap: 14px; flex: none; }
+.cta-actions .btn { font-size: 13px; padding: 12px 32px; }

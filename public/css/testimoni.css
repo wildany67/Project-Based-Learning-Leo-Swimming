@@ -1,0 +1,16 @@
+/* ==========================================================================
+   Bagian Testimoni
+   ========================================================================== */
+
+/* ---------- Testimoni ---------- */
+.testimoni { color: #fff; background: linear-gradient(135deg, #04285a 0%, #07468a 100%); padding: 88px 0 100px; }
+.testimoni .section-head { margin-bottom: 52px; }
+.testimoni .section-title { margin-top: 10px; }
+.testi-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; width: min(920px, 100%); margin-inline: auto; }
+.testi-card { background: #fff; color: var(--navy); border-radius: 14px; padding: 20px 22px; display: flex; flex-direction: column; min-height: 180px; }
+.quote-mark { font-family: var(--font-serif); font-size: 44px; line-height: .8; color: var(--gold); height: 22px; }
+.testi-quote { flex: 1; margin-top: 14px; font-family: var(--font-small); font-size: 11px; color: var(--muted); }
+.testi-card footer { display: flex; align-items: center; gap: 10px; padding-top: 14px; border-top: 1px solid var(--line); margin-top: 18px; }
+.avatar { flex: none; width: 40px; height: 40px; border-radius: 50%; background: var(--gold); display: grid; place-items: center; font-family: var(--font-display); font-weight: 800; font-size: 15px; color: var(--navy); }
+.testi-card strong { display: block; font-size: 11px; }
+.testi-card small { display: block; font-family: var(--font-small); font-size: 9px; color: var(--muted); }

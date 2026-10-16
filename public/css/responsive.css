@@ -1,0 +1,111 @@
+/* ==========================================================================
+   Responsif
+   ========================================================================== */
+
+/* Tablet */
+@media (max-width: 1024px) {
+    :root { --k: .8; }
+    .nav-menu { gap: 22px; }
+    .nav-menu ul { gap: 18px; }
+    .profil-grid { gap: 36px; }
+    .loc-grid { grid-template-columns: repeat(2, 1fr); }
+    .testi-grid { grid-template-columns: repeat(2, 1fr); }
+    .footer-grid { grid-template-columns: 1fr 1fr; }
+    .daftar-grid { gap: 32px; }
+}
+
+/* HP & tablet kecil */
+@media (max-width: 768px) {
+    :root { --gutter: 20px; --header-h: 68px; --k: .55; }
+    .section { padding: 64px 0; }
+    .brand img { width: 78px; }
+
+    /* Menu hamburger */
+    .nav-toggle { display: flex; }
+    .nav-menu { position: absolute; top: var(--header-h); left: 0; right: 0; background: #fff; flex-direction: column; align-items: stretch; gap: 0; padding: 8px var(--gutter) 22px; box-shadow: 0 18px 30px rgba(10, 44, 94, .12); border-top: 1px solid var(--line); opacity: 0; visibility: hidden; transform: translateY(-8px); transition: opacity .2s, transform .2s, visibility .2s; }
+    .nav-menu.is-open { opacity: 1; visibility: visible; transform: none; }
+    .nav-menu ul { flex-direction: column; gap: 0; }
+    .nav-menu ul a { padding: 14px 0; border-bottom: 1px solid var(--line); }
+    .nav-menu ul a::after { display: none; }
+    .nav-menu ul a.is-active { color: var(--blue); }
+    .nav-cta { margin-top: 18px; }
+
+    /* Hero */
+    .hero-main { min-height: 0; padding: 56px 0 56px; }
+    /* HP: foto di belakang dibuat lebih gelap supaya teks tetap terbaca */
+    .hero-bg {
+        background:
+            linear-gradient(180deg, rgba(10, 44, 94, .92) 0%, rgba(10, 44, 94, .8) 100%),
+            url('../images/hero/hero.jpg') 80% center / cover no-repeat,
+            linear-gradient(135deg, #04245a, #0a5aa8);
+        background-color: var(--navy);
+    }
+    .hero-inner { align-items: flex-start; }
+    .hero-badge { display: none; }
+    .hero-actions .btn { flex: 1 1 140px; }
+    .hero-strip ul { grid-template-columns: 1fr 1fr; gap: 14px 16px; padding: 16px 0; }
+    .hero-strip b { font-size: 30px; }
+    .hero-strip span { font-size: 12px; }
+
+    /* Profil */
+    .profil { padding: 56px 0 70px; }
+    .profil-grid { grid-template-columns: 1fr; }
+    .profil-photo { order: -1; max-width: 340px; }
+    .photo-card { right: 0; left: 24px; }
+    .profil-stats dd { max-width: none; }
+
+    /* Galeri */
+    .galeri { padding: 50px 0 90px; }
+    .gallery-grid { grid-template-columns: 1fr 1fr; grid-auto-rows: 130px; gap: 10px; }
+    .tile--big { grid-column: 1 / -1; grid-row: span 2; }
+    .tile--wide { grid-column: 1 / -1; }
+    .tile--tall { grid-column: auto; grid-row: span 2; }
+
+    /* Testimoni: geser horizontal biar tidak terlalu panjang */
+    .testimoni { padding: 64px 0 72px; }
+    .testimoni .wave { display: none; }
+    .testi-grid { display: flex; gap: 14px; overflow-x: auto; scroll-snap-type: x mandatory; padding: 4px var(--gutter) 14px; margin-inline: calc(var(--gutter) * -1); width: auto; -webkit-overflow-scrolling: touch; }
+    .testi-card { flex: 0 0 82%; scroll-snap-align: center; min-height: 190px; }
+    .testi-quote { font-size: 13px; }
+    .testi-card strong { font-size: 13px; }
+    .testi-card small { font-size: 11px; }
+
+    /* Program */
+    .program { padding: 64px 0 90px; }
+    .section-head { margin-bottom: 36px; }
+    .price-grid { grid-template-columns: 1fr; max-width: 420px; margin-inline: auto; }
+
+    /* Lokasi */
+    .lokasi { padding: 64px 0 100px; }
+    .loc-grid { grid-template-columns: 1fr; }
+    .loc-card { min-height: 0; }
+
+    /* CTA & footer */
+    .kontak { padding: 56px 0 64px; }
+    .cta-card { flex-direction: column; align-items: stretch; text-align: left; padding: 36px 26px; border-radius: 28px; gap: 26px; }
+    .cta-actions { flex-direction: column; }
+    .footer-grid { grid-template-columns: 1fr 1fr; gap: 32px 20px; }
+    .footer-brand { grid-column: 1 / -1; }
+
+    /* Form daftar */
+    .daftar { padding: 48px 0 64px; }
+    .daftar-grid { grid-template-columns: 1fr; }
+    .daftar-intro p { max-width: none; }
+    .form-card { padding: 22px 18px 26px; }
+    .form-row { grid-template-columns: 1fr; }
+    .field input[type='text'], .field input[type='tel'], .field input[type='date'], .field select { font-size: 16px; padding: 13px 14px; } /* 16px mencegah zoom otomatis di iOS */
+    .form-submit .btn { width: 100%; }
+}
+
+/* HP kecil */
+@media (max-width: 480px) {
+    .footer-grid { grid-template-columns: 1fr; }
+    .hero-title { font-size: 52px; }
+    .price-card { padding: 26px 20px 22px; }
+    .profil-photo { max-width: 300px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+    * { transition: none !important; }
+}
