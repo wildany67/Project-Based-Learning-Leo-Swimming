@@ -41,7 +41,7 @@ Target awal (bisa disesuaikan): halaman termuat di bawah 3 detik pada 4G, dan sk
 - Orang dewasa pemula yang ingin belajar renang.
 - Pihak sekolah (kelas khusus SMK Negeri 1 Surabaya).
 
-**Admin:** Pak Leo sendiri. Mengubah harga, lokasi, dan testimoni lewat satu file konfigurasi.
+**Admin:** Pak Leo sendiri. Mengelola pendaftar, paket dan harga, lokasi, testimoni, dan galeri lewat dashboard admin.
 
 ## 5. Ruang lingkup
 
@@ -52,11 +52,12 @@ Target awal (bisa disesuaikan): halaman termuat di bawah 3 detik pada 4G, dan sk
 - Form daftar yang mengirim data ke WhatsApp Pak Leo.
 - Tampilan responsif (desktop, tablet, HP).
 - SEO dasar dan tombol WhatsApp.
+- Dashboard admin (satu akun): pendaftar, paket dan harga, lokasi, testimoni, galeri.
+- Database (SQLite) untuk pendaftar dan konten.
 
 ### Belum termasuk (kemungkinan versi berikutnya)
 
-- Login murid atau panel admin.
-- Database dan riwayat pendaftar.
+- Login murid.
 - Pembayaran online.
 - Jadwal dan kuota real-time.
 - Blog atau artikel.
@@ -167,7 +168,7 @@ Pesan WhatsApp berisi tiga blok: Data Orang Tua, Data Anak, Pilihan Kelas.
 
 ## 9. Kebutuhan teknis
 
-- Laravel 11/12, PHP 8.2+, tanpa database, tanpa Vite (CSS dan JS dimuat dari `public/`).
+- Laravel 11/12, PHP 8.2+, database SQLite, tanpa Vite (CSS dan JS dimuat dari `public/`).
 - Semua isi yang berubah (harga, lokasi, kontak, testimoni, galeri) ada di `config/leo.php`.
 - Routing: `GET /`, `GET /daftar`, `POST /daftar`.
 - Validasi form di sisi server dan perlindungan CSRF bawaan Laravel.
@@ -219,7 +220,7 @@ Teks input di HP minimal 16 px agar iPhone tidak melakukan zoom otomatis. Target
 | --- | --- | --- |
 | Foto belum tersedia saat rilis | Galeri tampak kosong | Sembunyikan galeri sementara atau pakai foto kolam |
 | Testimoni masih placeholder | Terlihat tidak meyakinkan | Sembunyikan bagian testimoni sampai ada yang asli |
-| Pendaftaran hanya lewat WhatsApp | Tidak ada arsip data | Pesan WhatsApp jadi catatan. Tambah database di versi 2 bila perlu |
+| Pendaftaran masuk WhatsApp dan database | Data bisa hilang bila database tidak dicadangkan | Salin `database.sqlite` secara berkala dan ekspor CSV dari admin |
 | Harga berubah | Teks lama masih tampil | Ubah di `config/leo.php`, satu tempat |
 
 ## 15. Tahapan kerja

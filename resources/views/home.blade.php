@@ -12,7 +12,9 @@
         @include('sections.hero')
         @include('sections.profil')
         @include('sections.galeri')
-        @include('sections.testimoni')
+        @if (count($testimonials))
+            @include('sections.testimoni')
+        @endif
     </div>
 
     @include('sections.program')

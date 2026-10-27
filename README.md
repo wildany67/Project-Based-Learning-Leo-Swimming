@@ -110,7 +110,7 @@ Detail lengkap ada di [`public/images/README.md`](public/images/README.md).
 
 ## Mengubah isi
 
-Semua teks yang sering berubah ada di **`config/leo.php`**. Tidak perlu membuka Blade.
+Paket, lokasi, galeri, dan testimoni sekarang diubah lewat **dashboard admin** (lihat bagian berikutnya). Isi di `config/leo.php` hanya dipakai sebagai cadangan kalau database masih kosong. Nomor WhatsApp dan Instagram tetap diubah di file itu.
 
 | Mau ubah | Kunci |
 | --- | --- |
@@ -134,6 +134,32 @@ Lingkaran dan gelombang dekorasi dipasang dengan komponen, bukan CSS inline:
 <x-wave color="blue" pos="right:0;top:330px;width:22%" />
 ```
 
+## Dashboard admin
+
+Alamat: `/admin/login`. Isinya:
+
+- **Dashboard**: ringkasan pendaftar, grafik 14 hari, paket dan lokasi terlaris.
+- **Pendaftar**: cari, filter status, ubah status, chat WhatsApp, hapus, ekspor CSV.
+- **Paket dan harga**, **Lokasi kolam**, **Testimoni**, **Galeri foto**: tambah, ubah, hapus, atur urutan, tampil atau sembunyikan.
+
+Cara memasang (jalankan di folder yang berisi `artisan`):
+
+```bash
+php artisan migrate
+php artisan db:seed --class=ContentSeeder
+php artisan leo:admin
+php artisan serve
+```
+
+1. `migrate` membuat tabel.
+2. `ContentSeeder` memasukkan paket, lokasi, dan galeri dari `config/leo.php` ke database (aman dijalankan ulang).
+3. `leo:admin` menanyakan email dan password untuk satu akun admin.
+4. Buka `http://127.0.0.1:8000/admin/login`.
+
+Disarankan menambahkan `APP_TIMEZONE=Asia/Jakarta` di `.env` supaya jam pendaftar sesuai WIB.
+Foto galeri tersimpan di `public/images/gallery/`. Berkas `database/database.sqlite` jangan di-commit.
+Bagian Testimoni di website baru tampil setelah ada testimoni yang berstatus "Tayang".
+
 ## Form daftar
 
 1. Orang tua mengisi form di `/daftar`.
@@ -142,7 +168,7 @@ Lingkaran dan gelombang dekorasi dipasang dengan komponen, bukan CSS inline:
 4. Jika ada yang salah, form tampil kembali dengan pesan kesalahan dan isian tetap terjaga.
 
 Tombol "Daftar" di kartu harga membuka form dengan paket yang sudah terpilih (`/daftar?paket=privat-4`).
-Tidak ada data yang disimpan di server.
+Data pendaftar juga disimpan ke database supaya muncul di dashboard admin. Kalau penyimpanan gagal, pendaftar tetap diarahkan ke WhatsApp.
 
 ## Responsif
 
