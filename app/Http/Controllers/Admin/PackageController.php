@@ -7,104 +7,138 @@ use App\Models\Package;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
-use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 
-/** Kelola paket dan harga. */
+/**
+ * Paket dan harga. Setiap kelas punya beberapa pilihan: jumlah pertemuan, harga, dan bonus gratis.
+ * Di database disimpan sebagai teks siap tampil ("8× pertemuan", "Rp600.000", "+1× gratis"),
+ * di dashboard ditampilkan sebagai angka supaya mudah diubah.
+ */
 class PackageController extends Controller
 {
     public function index(): View
     {
+        $packages = Package::orderBy('sort_order')->orderBy('id')->get();
+
         return view('admin.packages.index', [
-            'packages' => Package::orderBy('sort_order')->orderBy('id')->get(),
+            'packages' => $packages,
+            'rows'     => $packages->mapWithKeys(fn (Package $p) => [$p->id => $this->toRows($p->prices ?? [])]),
         ]);
     }
 
-    public function create(): View
+    /** Simpan semua kelas sekaligus (tombol "Simpan perubahan"). */
+    public function update(Request $request): RedirectResponse
     {
-        return view('admin.packages.form', [
-            'package' => new Package([
-                'theme'       => 'navy',
-                'price_label' => 'Biaya per paket',
-                'is_active'   => true,
-                'sort_order'  => (int) Package::max('sort_order') + 1,
-            ]),
-        ]);
-    }
-
-    public function store(Request $request): RedirectResponse
-    {
-        Package::create($this->validated($request));
-
-        return redirect()->route('admin.packages.index')->with('success', 'Paket ditambahkan.');
-    }
-
-    public function edit(Package $package): View
-    {
-        return view('admin.packages.form', ['package' => $package]);
-    }
-
-    public function update(Request $request, Package $package): RedirectResponse
-    {
-        $package->update($this->validated($request, $package));
-
-        return redirect()->route('admin.packages.index')->with('success', 'Paket diperbarui.');
-    }
-
-    public function destroy(Package $package): RedirectResponse
-    {
-        $package->delete();
-
-        return redirect()->route('admin.packages.index')->with('success', 'Paket dihapus.');
-    }
-
-    private function validated(Request $request, ?Package $package = null): array
-    {
-        $data = $request->validate([
-            'name'        => ['required', 'string', 'max:100'],
-            'slug'        => ['required', 'alpha_dash', 'max:40', Rule::unique('packages', 'slug')->ignore($package?->id)],
-            'tagline'     => ['nullable', 'string', 'max:150'],
-            'highlight'   => ['nullable', 'string', 'max:100'],
-            'ghost'       => ['nullable', 'string', 'max:8'],
-            'theme'       => ['required', Rule::in(['navy', 'blue'])],
-            'price_label' => ['required', 'string', 'max:60'],
-            'prices_text' => ['required', 'string', 'max:2000'],
-            'features_text' => ['nullable', 'string', 'max:2000'],
-            'cta'         => ['required', 'string', 'max:60'],
-            'sort_order'  => ['nullable', 'integer', 'min:0', 'max:999'],
+        $request->validate([
+            'packages'                    => ['required', 'array'],
+            'packages.*.name'             => ['required', 'string', 'max:80'],
+            'packages.*.tagline'          => ['nullable', 'string', 'max:150'],
+            'packages.*.highlight'        => ['nullable', 'string', 'max:80'],
+            'packages.*.price_label'      => ['nullable', 'string', 'max:60'],
+            'packages.*.cta'              => ['nullable', 'string', 'max:60'],
+            'packages.*.ghost'            => ['nullable', 'string', 'max:8'],
+            'packages.*.theme'            => ['nullable', Rule::in(['navy', 'blue'])],
+            'packages.*.features'         => ['nullable', 'string', 'max:800'],
+            'packages.*.rows'             => ['required', 'array', 'min:1'],
+            'packages.*.rows.*.meetings'  => ['required', 'integer', 'min:1', 'max:99'],
+            'packages.*.rows.*.price'     => ['required', 'integer', 'min:0', 'max:99999999'],
+            'packages.*.rows.*.bonus'     => ['nullable', 'integer', 'min:0', 'max:20'],
         ], [
-            'slug.unique'      => 'Kode paket sudah dipakai paket lain.',
-            'slug.alpha_dash'  => 'Kode paket hanya boleh huruf, angka, tanda hubung, dan garis bawah.',
-            'required'         => ':attribute wajib diisi.',
+            'required' => ':attribute wajib diisi.',
+            'integer'  => ':attribute harus berupa angka.',
+            'min'      => 'Setiap kelas minimal punya satu pilihan paket.',
         ], [
-            'name'          => 'Nama paket',
-            'slug'          => 'Kode paket',
-            'price_label'   => 'Judul kotak harga',
-            'prices_text'   => 'Daftar harga',
-            'cta'           => 'Tulisan tombol',
+            'packages.*.name'            => 'Nama kelas',
+            'packages.*.rows.*.meetings' => 'Jumlah pertemuan',
+            'packages.*.rows.*.price'    => 'Harga',
         ]);
 
-        $prices = Package::parsePrices($data['prices_text']);
+        foreach (Package::all() as $package) {
+            $input = $request->input("packages.{$package->id}");
 
-        if ($prices === []) {
-            throw ValidationException::withMessages([
-                'prices_text' => 'Isi minimal satu harga dengan format: 4× pertemuan | Rp300.000',
+            if (! $input) {
+                continue;
+            }
+
+            $package->update([
+                'name'        => $input['name'],
+                'tagline'     => $input['tagline'] ?? null,
+                'highlight'   => $input['highlight'] ?? null,
+                'price_label' => $input['price_label'] ?: $package->price_label,
+                'cta'         => $input['cta'] ?: $package->cta,
+                'ghost'       => $input['ghost'] ?? null,
+                'theme'       => $input['theme'] ?? $package->theme,
+                'features'    => Package::parseLines($input['features'] ?? ''),
+                'is_active'   => ! empty($input['is_active']),
+                'prices'      => $this->fromRows($input['rows']),
             ]);
         }
 
-        return [
-            'name'        => $data['name'],
-            'slug'        => strtolower($data['slug']),
-            'tagline'     => $data['tagline'] ?? null,
-            'highlight'   => $data['highlight'] ?? null,
-            'ghost'       => $data['ghost'] ?? null,
-            'theme'       => $data['theme'],
-            'price_label' => $data['price_label'],
-            'prices'      => $prices,
-            'features'    => Package::parseLines($data['features_text'] ?? ''),
-            'cta'         => $data['cta'],
-            'sort_order'  => $data['sort_order'] ?? 0,
-            'is_active'   => $request->boolean('is_active'),
-        ];
+        return redirect()->route('admin.packages.index')->with('success', 'Paket dan harga disimpan. Website sudah memakai harga terbaru.');
+    }
+
+    /** Tambah satu pilihan paket ke sebuah kelas (modal "Tambah pilihan paket"). */
+    public function storeOption(Request $request): RedirectResponse
+    {
+        $data = $request->validateWithBag('opsi', [
+            'package_id' => ['required', 'exists:packages,id'],
+            'meetings'   => ['required', 'integer', 'min:1', 'max:99'],
+            'price'      => ['required', 'integer', 'min:0', 'max:99999999'],
+            'bonus'      => ['nullable', 'integer', 'min:0', 'max:20'],
+            'visible'    => ['required', 'boolean'],
+        ], [
+            'required' => ':attribute wajib diisi.',
+            'integer'  => ':attribute harus berupa angka.',
+        ], [
+            'package_id' => 'Kelas', 'meetings' => 'Jumlah pertemuan', 'price' => 'Harga',
+        ]);
+
+        $package = Package::findOrFail($data['package_id']);
+        $rows    = $this->toRows($package->prices ?? []);
+
+        foreach ($rows as $row) {
+            if ((int) $row['meetings'] === (int) $data['meetings']) {
+                return back()->withErrors(['meetings' => "Pilihan {$data['meetings']}× pertemuan sudah ada di {$package->name}."], 'opsi')->withInput();
+            }
+        }
+
+        $rows[] = ['meetings' => (int) $data['meetings'], 'price' => (int) $data['price'], 'bonus' => (int) ($data['bonus'] ?? 0), 'visible' => (bool) $data['visible']];
+
+        $package->update(['prices' => $this->fromRows($rows)]);
+
+        return redirect()->route('admin.packages.index')->with('success', 'Pilihan paket ditambahkan.');
+    }
+
+    /* ---------- Konversi: teks di database ⇄ angka di dashboard ---------- */
+
+    /** @return array<int,array{meetings:int,price:int,bonus:int,visible:bool}> */
+    private function toRows(array $prices): array
+    {
+        return array_values(array_map(fn ($p) => [
+            'meetings' => preg_match('/\d+/', (string) ($p['label'] ?? ''), $m) ? (int) $m[0] : 1,
+            'price'    => (int) preg_replace('/\D+/', '', (string) ($p['price'] ?? '0')),
+            'bonus'    => preg_match('/\+\s*(\d+)/', (string) ($p['note'] ?? ''), $b) ? (int) $b[1] : 0,
+            'visible'  => empty($p['hidden']),
+        ], $prices));
+    }
+
+    private function fromRows(array $rows): array
+    {
+        $out = [];
+
+        foreach ($rows as $row) {
+            $bonus = (int) ($row['bonus'] ?? 0);
+
+            $out[] = [
+                'label'  => (int) $row['meetings'] . '× pertemuan',
+                'price'  => 'Rp' . number_format((int) $row['price'], 0, ',', '.'),
+                'note'   => $bonus > 0 ? "+{$bonus}× gratis" : null,
+                'hidden' => array_key_exists('visible', $row) ? ! $row['visible'] : false,
+            ];
+        }
+
+        usort($out, fn ($a, $b) => (int) $a['label'] <=> (int) $b['label']);
+
+        return $out;
     }
 }

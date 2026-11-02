@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Registration;
+use App\Models\Setting;
 use App\Support\SiteContent;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -30,6 +31,7 @@ class PageController extends Controller
             'locations'       => SiteContent::locations(),
             'days'            => config('leo.days'),
             'selectedPackage' => $request->query('paket'),
+            'closed'          => ! Setting::bool('accept_registrations', true),
         ]);
     }
 
@@ -39,6 +41,10 @@ class PageController extends Controller
      */
     public function kirim(Request $request): RedirectResponse
     {
+        if (! Setting::bool('accept_registrations', true)) {
+            return redirect()->route('daftar');
+        }
+
         $packages  = SiteContent::packageOptions();
         $locations = collect(SiteContent::locations())->pluck('pool')->all();
         $days      = config('leo.days');
@@ -105,7 +111,7 @@ class PageController extends Controller
     private function saveRegistration(array $data, string $packageLabel, array $schedule): void
     {
         try {
-            Registration::create([
+            $registration = Registration::create([
                 'parent_name'   => $data['parent_name'],
                 'phone'         => $data['phone'],
                 'child_name'    => $data['child_name'],
@@ -116,8 +122,10 @@ class PageController extends Controller
                 'location'      => $data['location'],
                 'schedule'      => $schedule,
                 'start_date'    => $data['start_date'],
-                'status'        => 'baru',
+                'status'        => Registration::WAITING,
             ]);
+
+            $registration->log('Pendaftaran masuk dari website');
         } catch (\Throwable $e) {
             Log::error('Pendaftaran gagal disimpan ke database: ' . $e->getMessage());
         }

@@ -42,11 +42,18 @@ class SiteContent
                 'ghost'       => $p->ghost,
                 'theme'       => $p->theme,
                 'price_label' => $p->price_label,
-                'prices'      => $p->prices ?? [],
+                'prices'      => array_values(array_filter($p->prices ?? [], fn ($row) => empty($row['hidden']))),
                 'features'    => $p->features ?? [],
                 'cta'         => $p->cta,
-                'cta_package' => self::optionKeys($p->slug, $p->prices ?? [])[0] ?? '',
+                'cta_package' => '',
             ])
+            ->map(function (array $p) {
+                $p['cta_package'] = self::optionKeys($p['key'], $p['prices'])[0] ?? '';
+
+                return $p;
+            })
+            ->filter(fn (array $p) => $p['prices'] !== [])
+            ->values()
             ->all();
     }
 
@@ -106,7 +113,7 @@ class SiteContent
             ->map(fn (Location $l) => [
                 'area'     => $l->area,
                 'pool'     => $l->pool,
-                'address'  => $l->address,
+                'address'  => (string) $l->address,
                 'maps_url' => $l->maps_url,
             ])
             ->all();

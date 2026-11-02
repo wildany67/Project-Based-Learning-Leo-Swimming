@@ -4,76 +4,102 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Location;
+use App\Models\Registration;
+use App\Support\Schedule;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
-/** Kelola lokasi kolam. */
+/**
+ * Kolam renang. Saklar "Menerima pendaftar" (is_active) menutup kolam sementara:
+ * kolam tidak tampil di website dan form daftar, tetapi datanya tetap ada.
+ */
 class LocationController extends Controller
 {
     public function index(): View
     {
-        return view('admin.locations.index', [
-            'locations' => Location::orderBy('sort_order')->orderBy('id')->get(),
-        ]);
-    }
+        $locations = Location::withCount(['slots as active_slots' => fn ($q) => $q->where('is_active', true)])
+            ->with(['slots' => fn ($q) => $q->orderBy('time')])
+            ->orderBy('sort_order')->orderBy('id')->get();
 
-    public function create(): View
-    {
-        return view('admin.locations.form', [
-            'location' => new Location([
-                'is_active'  => true,
-                'sort_order' => (int) Location::max('sort_order') + 1,
-            ]),
+        // Jumlah murid aktif per nama kolam
+        $students = Registration::activeStudents()->selectRaw('location, count(*) as total')
+            ->groupBy('location')->pluck('total', 'location');
+
+        return view('admin.locations.index', [
+            'locations' => $locations,
+            'students'  => $students,
+            'days'      => Schedule::DAYS,
+            'occupancy' => Schedule::occupancy(),
         ]);
     }
 
     public function store(Request $request): RedirectResponse
     {
-        Location::create($this->validated($request));
+        $data = $this->validated($request, 'kolam-new');
+        $data['sort_order'] = (int) Location::max('sort_order') + 1;
 
-        return redirect()->route('admin.locations.index')->with('success', 'Lokasi ditambahkan.');
-    }
+        $location = Location::create($data);
 
-    public function edit(Location $location): View
-    {
-        return view('admin.locations.form', ['location' => $location]);
+        return back()->with('success', "Kolam {$location->pool} ditambahkan.");
     }
 
     public function update(Request $request, Location $location): RedirectResponse
     {
-        $location->update($this->validated($request));
+        $data    = $this->validated($request, 'kolam-' . $location->id);
+        $oldName = $location->pool;
 
-        return redirect()->route('admin.locations.index')->with('success', 'Lokasi diperbarui.');
+        $location->update($data);
+
+        // Nama kolam disimpan sebagai teks di data pendaftar; ikut diperbarui supaya jadwal tetap cocok.
+        if ($oldName !== $location->pool) {
+            Registration::where('location', $oldName)->update(['location' => $location->pool]);
+        }
+
+        return back()->with('success', 'Data kolam disimpan.');
+    }
+
+    /** Saklar cepat di kartu kolam. */
+    public function toggle(Request $request, Location $location): RedirectResponse
+    {
+        $location->update(['is_active' => $request->boolean('is_active')]);
+
+        return back()->with('success', $location->is_active
+            ? "{$location->pool} menerima pendaftar lagi."
+            : "{$location->pool} ditutup sementara.");
     }
 
     public function destroy(Location $location): RedirectResponse
     {
-        $location->delete();
+        $name = $location->pool;
+        $location->delete();   // slot jadwalnya ikut terhapus
 
-        return redirect()->route('admin.locations.index')->with('success', 'Lokasi dihapus.');
+        return back()->with('success', "Kolam {$name} dihapus.");
     }
 
-    private function validated(Request $request): array
+    private function validated(Request $request, string $bag): array
     {
-        $data = $request->validate([
-            'area'       => ['required', 'string', 'max:80'],
-            'pool'       => ['required', 'string', 'max:150'],
-            'address'    => ['required', 'string', 'max:250'],
-            'maps_url'   => ['nullable', 'url', 'max:500'],
-            'sort_order' => ['nullable', 'integer', 'min:0', 'max:999'],
+        $data = $request->validateWithBag($bag, [
+            'pool'     => ['required', 'string', 'max:150'],
+            'area'     => ['required', Rule::in(array_keys(Location::AREAS))],
+            'address'  => ['nullable', 'string', 'max:250'],
+            'maps_url' => ['nullable', 'url', 'max:500'],
+            'is_active' => ['required', 'boolean'],
         ], [
-            'required'     => ':attribute wajib diisi.',
-            'maps_url.url' => 'Link Google Maps harus diawali https://',
+            'required' => ':attribute wajib diisi.',
+            'in'       => 'Pilih salah satu wilayah.',
+            'url'      => 'Link Google Maps harus diawali https://',
         ], [
-            'area'    => 'Wilayah',
-            'pool'    => 'Nama kolam',
-            'address' => 'Alamat',
+            'pool' => 'Nama kolam', 'area' => 'Wilayah',
         ]);
 
-        $data['sort_order'] = $data['sort_order'] ?? 0;
-        $data['is_active']  = $request->boolean('is_active');
-
-        return $data;
+        return [
+            'pool'      => $data['pool'],
+            'area'      => $data['area'],
+            'address'   => $data['address'] ?? null,
+            'maps_url'  => $data['maps_url'] ?? null,
+            'is_active' => (bool) $data['is_active'],
+        ];
     }
 }

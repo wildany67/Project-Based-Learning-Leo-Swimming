@@ -136,29 +136,45 @@ Lingkaran dan gelombang dekorasi dipasang dengan komponen, bukan CSS inline:
 
 ## Dashboard admin
 
-Alamat: `/admin/login`. Isinya:
+Alamat: `/admin/login`. Tampilannya mengikuti desain Figma "Panel Admin". Menunya:
 
-- **Dashboard**: ringkasan pendaftar, grafik 14 hari, paket dan lokasi terlaris.
-- **Pendaftar**: cari, filter status, ubah status, chat WhatsApp, hapus, ekspor CSV.
-- **Paket dan harga**, **Lokasi kolam**, **Testimoni**, **Galeri foto**: tambah, ubah, hapus, atur urutan, tampil atau sembunyikan.
+| Menu | Isinya |
+| --- | --- |
+| Beranda | Sapaan, 4 angka ringkas, jadwal hari ini, pendaftar terbaru, tombol "Tambah pendaftar manual" dan "Salin link pendaftaran" |
+| Pendaftar | Filter status (Menunggu, Terkonfirmasi, Selesai, Dibatalkan), cari, Unduh Excel (CSV), detail dengan riwayat, catatan, centang bukti transfer, tombol WhatsApp |
+| Murid | Pendaftar yang sudah terkonfirmasi: sisa pertemuan, pengingat perpanjang paket, catat kehadiran hari ini |
+| Jadwal | Grid Senin sampai Jumat per jam, warna sesuai keterisian, tambah dan hentikan slot |
+| Kolam | Kartu kolam, saklar "Menerima pendaftar", ubah data, lihat jadwal |
+| Paket dan Harga | Ubah harga langsung di kotak, tambah pilihan paket, contoh tampilan di website |
+| Konten Website | Galeri foto dan testimoni (testimoni baru tampil kalau "Sudah izin") |
+| Pengaturan | Nomor WhatsApp, pesan WhatsApp otomatis, terima pendaftar baru, ukuran tulisan, ganti kata sandi |
+| Bantuan | Panduan singkat untuk Pak Leo |
+
+Alur kerja: pendaftar masuk dari website (status **Menunggu**) → orang tua membayar → Pak Leo mencentang
+"Bukti transfer sudah saya cek" → **Sudah bayar: Tandai Terkonfirmasi** → anak menjadi murid dan mengisi slot jadwal.
 
 Cara memasang (jalankan di folder yang berisi `artisan`):
 
 ```bash
 php artisan migrate
 php artisan db:seed --class=ContentSeeder
-php artisan leo:admin
+php artisan leo:admin --name="Nama Admin" --email=email@gmail.com --password=passwordnya
 php artisan serve
 ```
 
-1. `migrate` membuat tabel.
+1. `migrate` membuat dan memperbarui tabel. Data pendaftar lama dipindah ke status yang paling mirip.
 2. `ContentSeeder` memasukkan paket, lokasi, dan galeri dari `config/leo.php` ke database (aman dijalankan ulang).
-3. `leo:admin` menanyakan email dan password untuk satu akun admin.
+3. `leo:admin` membuat akun admin. Bisa dijalankan berkali-kali dengan email berbeda untuk menambah akun (email yang sama = ganti password).
 4. Buka `http://127.0.0.1:8000/admin/login`.
 
-Disarankan menambahkan `APP_TIMEZONE=Asia/Jakarta` di `.env` supaya jam pendaftar sesuai WIB.
-Foto galeri tersimpan di `public/images/gallery/`. Berkas `database/database.sqlite` jangan di-commit.
-Bagian Testimoni di website baru tampil setelah ada testimoni yang berstatus "Tayang".
+Untuk mencoba dengan data contoh (fiktif, jangan di website yang sudah dipakai sungguhan):
+
+```bash
+php artisan db:seed --class=DemoSeeder
+```
+
+Disarankan menambahkan `APP_TIMEZONE=Asia/Jakarta` di `.env` supaya jam sesuai WIB.
+Foto galeri tersimpan di `public/images/gallery/`. Berkas `.env` dan `database/database.sqlite` jangan di-commit.
 
 ## Form daftar
 

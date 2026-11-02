@@ -9,50 +9,27 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
-use Illuminate\View\View;
 
-/** Kelola foto galeri. File disimpan di public/images/gallery/ (tanpa storage:link). */
+/** Foto galeri. File disimpan di public/images/gallery/ (tanpa storage:link). */
 class GalleryController extends Controller
 {
     private const FOLDER = 'images/gallery';
 
-    public function index(): View
-    {
-        return view('admin.gallery.index', [
-            'items' => GalleryItem::orderBy('sort_order')->orderBy('id')->get(),
-        ]);
-    }
-
-    public function create(): View
-    {
-        return view('admin.gallery.form', [
-            'item' => new GalleryItem([
-                'size'       => 'small',
-                'tone'       => 'sky',
-                'is_active'  => true,
-                'sort_order' => (int) GalleryItem::max('sort_order') + 1,
-            ]),
-        ]);
-    }
-
     public function store(Request $request): RedirectResponse
     {
-        $data = $this->validated($request, imageRequired: true);
-        $data['image'] = $this->storeImage($request);
+        $data = $this->validated($request, 'foto-new', imageRequired: true);
+
+        $data['image']      = $this->storeImage($request);
+        $data['sort_order'] = (int) GalleryItem::max('sort_order') + 1;
 
         GalleryItem::create($data);
 
-        return redirect()->route('admin.gallery.index')->with('success', 'Foto ditambahkan.');
-    }
-
-    public function edit(GalleryItem $item): View
-    {
-        return view('admin.gallery.form', ['item' => $item]);
+        return $this->done('Foto ditambahkan.');
     }
 
     public function update(Request $request, GalleryItem $item): RedirectResponse
     {
-        $data = $this->validated($request, imageRequired: false);
+        $data = $this->validated($request, 'foto-' . $item->id, imageRequired: false);
 
         if ($request->hasFile('image')) {
             $this->deleteImage($item->image);
@@ -61,7 +38,7 @@ class GalleryController extends Controller
 
         $item->update($data);
 
-        return redirect()->route('admin.gallery.index')->with('success', 'Foto diperbarui.');
+        return $this->done('Foto disimpan.');
     }
 
     public function destroy(GalleryItem $item): RedirectResponse
@@ -69,19 +46,23 @@ class GalleryController extends Controller
         $this->deleteImage($item->image);
         $item->delete();
 
-        return redirect()->route('admin.gallery.index')->with('success', 'Foto dihapus.');
+        return $this->done('Foto dihapus.');
     }
 
-    private function validated(Request $request, bool $imageRequired): array
+    private function done(string $message): RedirectResponse
     {
-        $data = $request->validate([
-            'caption'    => ['required', 'string', 'max:150'],
-            'size'       => ['required', Rule::in(array_keys(GalleryItem::SIZES))],
-            'tone'       => ['required', Rule::in(array_keys(GalleryItem::TONES))],
-            'image'      => [$imageRequired ? 'required' : 'nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:4096'],
-            'sort_order' => ['nullable', 'integer', 'min:0', 'max:999'],
+        return redirect()->route('admin.content.index', ['tab' => 'galeri'])->with('success', $message);
+    }
+
+    private function validated(Request $request, string $bag, bool $imageRequired): array
+    {
+        $data = $request->validateWithBag($bag, [
+            'caption'   => ['required', 'string', 'max:150'],
+            'size'      => ['required', Rule::in(array_keys(GalleryItem::SIZES))],
+            'image'     => [$imageRequired ? 'required' : 'nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:4096'],
+            'is_active' => ['required', 'boolean'],
         ], [
-            'required'   => ':attribute wajib diisi.',
+            'required'    => ':attribute wajib diisi.',
             'image.image' => 'File harus berupa gambar.',
             'image.mimes' => 'Format yang boleh: JPG, PNG, atau WEBP.',
             'image.max'   => 'Ukuran foto maksimal 4 MB.',
@@ -90,12 +71,11 @@ class GalleryController extends Controller
             'image'   => 'Foto',
         ]);
 
-        unset($data['image']); // file diproses terpisah di storeImage()
-
-        $data['sort_order'] = $data['sort_order'] ?? 0;
-        $data['is_active']  = $request->boolean('is_active');
-
-        return $data;
+        return [
+            'caption'   => $data['caption'],
+            'size'      => $data['size'],
+            'is_active' => (bool) $data['is_active'],
+        ];
     }
 
     private function storeImage(Request $request): ?string

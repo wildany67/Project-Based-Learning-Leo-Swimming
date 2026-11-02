@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="id">
+<html lang="id" class="fs-{{ \App\Models\Setting::get('font_size', 'normal') }}">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -25,15 +25,12 @@
 
                 <div class="topbar-title">
                     <h1>@yield('title', 'Dashboard')</h1>
-                    <p>{{ now()->locale('id')->translatedFormat('l, d F Y') }}</p>
+                    <p>@yield('subtitle')</p>
                 </div>
 
-                <div class="topbar-user">
-                    <span class="avatar" aria-hidden="true">{{ mb_strtoupper(mb_substr(auth()->user()->name, 0, 1)) }}</span>
-                    <span class="user-meta">
-                        <strong>{{ auth()->user()->name }}</strong>
-                        <small>Admin</small>
-                    </span>
+                <div class="topbar-actions">
+                    <a href="{{ route('home') }}" class="btn btn--outline btn--sm" target="_blank" rel="noopener">Lihat website</a>
+                    <span class="avatar" title="{{ auth()->user()->name }}">{{ mb_strtoupper(mb_substr(auth()->user()->name, 0, 1)) }}</span>
                 </div>
             </header>
 

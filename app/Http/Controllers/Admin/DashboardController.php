@@ -3,99 +3,91 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\GalleryItem;
 use App\Models\Location;
-use App\Models\Package;
 use App\Models\Registration;
-use App\Models\Testimonial;
+use App\Models\ScheduleSlot;
+use App\Support\RegistrationForm;
+use App\Support\Schedule;
 use Illuminate\View\View;
 
-/** Halaman ringkasan: angka penting, grafik pendaftar, dan pendaftar terbaru. */
+/** Beranda: sapaan, angka ringkas, jadwal hari ini, dan pendaftar terbaru. */
 class DashboardController extends Controller
 {
-    /** Jumlah hari pada grafik. */
-    private const CHART_DAYS = 14;
-
     public function __invoke(): View
     {
-        $byStatus = Registration::selectRaw('status, count(*) as total')
-            ->groupBy('status')
-            ->pluck('total', 'status');
+        $now       = now();
+        $occupancy = Schedule::occupancy();
 
-        $statusTotals = [];
-        foreach (Registration::STATUSES as $key => $label) {
-            $statusTotals[$key] = ['label' => $label, 'total' => (int) ($byStatus[$key] ?? 0)];
-        }
-
-        $total = array_sum(array_column($statusTotals, 'total'));
+        $stats = [
+            'students'  => Registration::activeStudents()->count(),
+            'month'     => Registration::whereBetween('created_at', [$now->copy()->startOfMonth(), $now->copy()->endOfMonth()])->count(),
+            'free'      => $this->freeSlotsThisWeek($occupancy),
+            'confirmed' => Registration::whereBetween('confirmed_at', [$now->copy()->startOfMonth(), $now->copy()->endOfMonth()])->count(),
+        ];
 
         return view('admin.dashboard', [
-            'stats' => [
-                'total'      => $total,
-                'thisMonth'  => Registration::where('created_at', '>=', now()->startOfMonth())->count(),
-                'thisWeek'   => Registration::where('created_at', '>=', now()->startOfWeek())->count(),
-                'new'        => $statusTotals['baru']['total'],
-                'active'     => $statusTotals['aktif']['total'],
-            ],
-            'chart'        => $this->chart(),
-            'statusTotals' => $statusTotals,
-            'byPackage'    => $this->topBy('package_label'),
-            'byLocation'   => $this->topBy('location'),
-            'latest'       => Registration::latest()->limit(6)->get(),
-            'content'      => [
-                'packages'     => Package::where('is_active', true)->count(),
-                'locations'    => Location::where('is_active', true)->count(),
-                'testimonials' => Testimonial::where('is_published', true)->count(),
-                'gallery'      => GalleryItem::where('is_active', true)->count(),
-            ],
+            'greeting' => $this->greeting((int) $now->format('G')),
+            'stats'    => $stats,
+            'today'    => $this->todaySchedule($occupancy),
+            'latest'   => Registration::latest()->limit(5)->get(),
+            'waiting'  => Registration::where('status', Registration::WAITING)->count(),
+            'form'     => RegistrationForm::options(),
         ]);
     }
 
-    /** Pendaftar per hari untuk CHART_DAYS hari terakhir (termasuk hari ini). */
-    private function chart(): array
+    private function greeting(int $hour): string
     {
-        $from = now()->subDays(self::CHART_DAYS - 1)->startOfDay();
+        return match (true) {
+            $hour < 11 => 'Selamat pagi',
+            $hour < 15 => 'Selamat siang',
+            $hour < 18 => 'Selamat sore',
+            default    => 'Selamat malam',
+        };
+    }
 
-        $perDay = Registration::where('created_at', '>=', $from)
-            ->get(['created_at'])
-            ->countBy(fn ($r) => $r->created_at->format('Y-m-d'));
+    /** Total tempat kosong di semua slot aktif minggu ini. */
+    private function freeSlotsThisWeek(array $occupancy): int
+    {
+        $monday = Schedule::monday(now());
 
-        $days = [];
-        for ($i = 0; $i < self::CHART_DAYS; $i++) {
-            $date = $from->copy()->addDays($i);
-            $days[] = [
-                'day'   => $date->format('j'),
-                'label' => $date->locale('id')->translatedFormat('d M'),
-                'count' => (int) ($perDay[$date->format('Y-m-d')] ?? 0),
-                'today' => $date->isToday(),
+        return ScheduleSlot::with('location')->where('is_active', true)->forWeek($monday)->get()
+            ->sum(fn (ScheduleSlot $s) => max($s->capacity - count(Schedule::studentsOf($s, $occupancy)), 0));
+    }
+
+    /**
+     * Jadwal hari ini, dikelompokkan per jam dan kolam.
+     * Satu murid → "Nama (privat)", lebih dari satu → "Grup N murid".
+     *
+     * @return array<int,array{time:string,text:string}>
+     */
+    private function todaySchedule(array $occupancy): array
+    {
+        $day = Schedule::DAYS[(int) now()->isoWeekday()] ?? null;
+
+        if (! $day) {
+            return [];
+        }
+
+        $rows = [];
+
+        foreach ($occupancy as $key => $students) {
+            [$pool, $slotDay, $time] = explode('|', $key);
+
+            if ($slotDay !== $day) {
+                continue;
+            }
+
+            $rows[] = [
+                'sort' => $time,
+                'time' => Schedule::timeLabel($time),
+                'text' => Location::shortName($pool) . ' · ' . (count($students) === 1
+                    ? $students[0]->child_name . ' (privat)'
+                    : 'Grup ' . count($students) . ' murid'),
             ];
         }
 
-        $max = max(1, max(array_column($days, 'count')));
+        usort($rows, fn ($a, $b) => strcmp($a['sort'], $b['sort']));
 
-        foreach ($days as &$day) {
-            $day['pct'] = $day['count'] > 0 ? max(8, round($day['count'] / $max * 100)) : 0;
-        }
-        unset($day);
-
-        return ['days' => $days, 'total' => array_sum(array_column($days, 'count')), 'max' => $max];
-    }
-
-    /** 5 nilai terbanyak untuk satu kolom, mis. paket atau lokasi, lengkap dengan persen. */
-    private function topBy(string $column): array
-    {
-        $rows = Registration::selectRaw("$column as name, count(*) as total")
-            ->groupBy($column)
-            ->orderByDesc('total')
-            ->limit(5)
-            ->get();
-
-        $max = max(1, (int) $rows->max('total'));
-
-        return $rows->map(fn ($r) => [
-            'name'  => $r->name,
-            'total' => (int) $r->total,
-            'pct'   => round($r->total / $max * 100),
-        ])->all();
+        return $rows;
     }
 }

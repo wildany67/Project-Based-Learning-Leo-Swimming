@@ -30,6 +30,16 @@
         'eye'       => '<path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>',
         'close'     => '<path d="M6 6l12 12M18 6L6 18"/>',
         'lock'      => '<rect x="5" y="11" width="14" height="9" rx="2.5"/><path d="M8 11V8a4 4 0 018 0v3"/>',
+        'user'      => '<circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7"/>',
+        'help'      => '<circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.6 2.6 0 015 .8c0 1.8-2.5 2.2-2.5 3.9M12 17.3v.2"/>',
+        'settings'  => '<circle cx="12" cy="12" r="3"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M18.4 5.6l-2.1 2.1M7.7 16.3l-2.1 2.1"/>',
+        'wave'      => '<path d="M3 9c2 0 2-2 4-2s2 2 4 2 2-2 4-2 2 2 4 2M3 15c2 0 2-2 4-2s2 2 4 2 2-2 4-2 2 2 4 2"/>',
+        'camera'    => '<path d="M4 8h3l2-3h6l2 3h3v12H4V8z"/><circle cx="12" cy="13" r="3.5"/>',
+        'warning'   => '<path d="M12 4l10 17H2L12 4z"/><path d="M12 10v5M12 18v.2"/>',
+        'copy'      => '<rect x="8" y="8" width="12" height="12" rx="2.5"/><path d="M16 8V5a1 1 0 00-1-1H5a1 1 0 00-1 1v10a1 1 0 001 1h3"/>',
+        'chevron'   => '<path d="M9 6l6 6-6 6"/>',
+        'chevron-l' => '<path d="M15 6l-6 6 6 6"/>',
+        'refresh'   => '<path d="M20 11a8 8 0 10-2.3 5.7M20 5v6h-6"/>',
         'dot'       => '<circle cx="12" cy="12" r="3"/>',
     ];
 @endphp

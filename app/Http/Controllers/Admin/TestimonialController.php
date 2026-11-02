@@ -6,65 +6,45 @@ use App\Http\Controllers\Controller;
 use App\Models\Testimonial;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\View\View;
 
-/** Kelola testimoni. Yang belum "tayang" tidak muncul di website. */
+/** Testimoni. "Sudah izin" (is_published) = boleh tampil di website. */
 class TestimonialController extends Controller
 {
-    public function index(): View
-    {
-        return view('admin.testimonials.index', [
-            'testimonials' => Testimonial::orderBy('sort_order')->orderBy('id')->get(),
-        ]);
-    }
-
-    public function create(): View
-    {
-        return view('admin.testimonials.form', [
-            'testimonial' => new Testimonial([
-                'is_published' => false,
-                'sort_order'   => (int) Testimonial::max('sort_order') + 1,
-            ]),
-        ]);
-    }
-
     public function store(Request $request): RedirectResponse
     {
-        Testimonial::create($this->validated($request));
+        $data = $this->validated($request, 'testi-new');
+        $data['sort_order'] = (int) Testimonial::max('sort_order') + 1;
 
-        return redirect()->route('admin.testimonials.index')->with('success', 'Testimoni ditambahkan.');
-    }
+        Testimonial::create($data);
 
-    public function edit(Testimonial $testimonial): View
-    {
-        return view('admin.testimonials.form', ['testimonial' => $testimonial]);
+        return redirect()->route('admin.content.index', ['tab' => 'testimoni'])->with('success', 'Testimoni ditambahkan.');
     }
 
     public function update(Request $request, Testimonial $testimonial): RedirectResponse
     {
-        $testimonial->update($this->validated($request));
+        $testimonial->update($this->validated($request, 'testi-' . $testimonial->id));
 
-        return redirect()->route('admin.testimonials.index')->with('success', 'Testimoni diperbarui.');
+        return redirect()->route('admin.content.index', ['tab' => 'testimoni'])->with('success', 'Testimoni disimpan.');
     }
 
     public function destroy(Testimonial $testimonial): RedirectResponse
     {
         $testimonial->delete();
 
-        return redirect()->route('admin.testimonials.index')->with('success', 'Testimoni dihapus.');
+        return redirect()->route('admin.content.index', ['tab' => 'testimoni'])->with('success', 'Testimoni dihapus.');
     }
 
-    private function validated(Request $request): array
+    private function validated(Request $request, string $bag): array
     {
-        $data = $request->validate([
-            'quote'      => ['required', 'string', 'max:600'],
-            'name'       => ['required', 'string', 'max:100'],
-            'program'    => ['nullable', 'string', 'max:100'],
-            'sort_order' => ['nullable', 'integer', 'min:0', 'max:999'],
+        $data = $request->validateWithBag($bag, [
+            'quote'   => ['required', 'string', 'max:600'],
+            'name'    => ['required', 'string', 'max:100'],
+            'program' => ['nullable', 'string', 'max:100'],
+            'allowed' => ['required', 'boolean'],
         ], [
             'required' => ':attribute wajib diisi.',
         ], [
-            'quote' => 'Isi testimoni',
+            'quote' => 'Kata-kata orang tua',
             'name'  => 'Nama',
         ]);
 
@@ -73,8 +53,7 @@ class TestimonialController extends Controller
             'name'         => $data['name'],
             'program'      => $data['program'] ?? null,
             'initial'      => Testimonial::makeInitial($data['name']),
-            'sort_order'   => $data['sort_order'] ?? 0,
-            'is_published' => $request->boolean('is_published'),
+            'is_published' => (bool) $data['allowed'],
         ];
     }
 }
